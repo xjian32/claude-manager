@@ -11,6 +11,15 @@ use std::path::PathBuf;
 use directories::ProjectDirs;
 use session_store::{SqliteSessionStore, SessionStore, SessionFilter};
 
+fn format_beijing_time(utc_str: &str) -> String {
+    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(utc_str) {
+        let beijing = dt.with_timezone(&chrono_tz::Asia::Shanghai);
+        beijing.format("%Y-%m-%d %H:%M:%S").to_string()
+    } else {
+        utc_str.to_string()
+    }
+}
+
 pub fn get_db_path() -> PathBuf {
     if let Some(proj_dirs) = ProjectDirs::from("com", "session-manager", "sm") {
         let data_dir = proj_dirs.data_local_dir();
@@ -234,7 +243,7 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
                     session.session_id,
                     session.project_path.as_ref().unwrap_or(&"none".to_string()),
                     session.model.as_ref().unwrap_or(&"unknown".to_string()),
-                    session.created_at,
+                    format_beijing_time(&session.created_at),
                     session.title.as_ref().unwrap_or(&"(no title)".to_string()),
                     last_msg_line,
                 );

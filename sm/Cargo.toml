@@ -16,3 +16,5 @@ tracing-subscriber.workspace = true
 ratatui.workspace = true
 arboard.workspace = true
 crossterm.workspace = true
+chrono-tz = "0.8"
+chrono.workspace = true
