@@ -1,0 +1,5 @@
+/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/deps/signal_hook_mio-f5743222d4454736.d: /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-mio-0.2.5/src/lib.rs
+
+/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/deps/libsignal_hook_mio-f5743222d4454736.rmeta: /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-mio-0.2.5/src/lib.rs
+
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/signal-hook-mio-0.2.5/src/lib.rs:

@@ -1,0 +1,10 @@
+/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/deps/objc2_app_kit-0fb9dcdd4cbeb5a5.d: /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/lib.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/mod.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSImage.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSPasteboard.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSPasteboardItem.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/image.rs
+
+/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/deps/libobjc2_app_kit-0fb9dcdd4cbeb5a5.rmeta: /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/lib.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/mod.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSImage.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSPasteboard.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSPasteboardItem.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/image.rs
+
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/lib.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/mod.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSImage.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSPasteboard.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/generated/NSPasteboardItem.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-app-kit-0.3.2/src/image.rs:

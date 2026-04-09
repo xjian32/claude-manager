@@ -1,0 +1,10 @@
+/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/deps/objc2_encode-04b34decac9f8dc1.d: /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/lib.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/encoding.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/encoding_box.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/helper.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/parse.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/static_str.rs
+
+/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/deps/libobjc2_encode-04b34decac9f8dc1.rmeta: /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/lib.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/encoding.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/encoding_box.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/helper.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/parse.rs /Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/static_str.rs
+
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/lib.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/encoding.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/encoding_box.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/helper.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/parse.rs:
+/Users/jaxx/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/objc2-encode-4.1.0/src/static_str.rs:

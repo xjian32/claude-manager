@@ -1,0 +1,34 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/session-store",
+    "crates/scanner-core",
+    "crates/scanner-claude",
+    "crates/scanner-opencode",
+    "sm",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["jaxx"]
+
+[workspace.dependencies]
+rusqlite = { version = "0.31", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4.5", features = ["derive"] }
+directories = "5.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+ratatui = "0.26"
+arboard = "3.4"
+crossterm = "0.27"
+toml = "0.8"
+scanner-core = { path = "crates/scanner-core" }
+scanner-claude = { path = "crates/scanner-claude" }
+scanner-opencode = { path = "crates/scanner-opencode" }
+session-store = { path = "crates/session-store" }

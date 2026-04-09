@@ -1,0 +1,12 @@
+[package]
+name = "scanner-claude"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+scanner-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+chrono.workspace = true
+dirs = "5.0"
