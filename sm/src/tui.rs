@@ -238,11 +238,10 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
                     .unwrap_or_else(|| "Last: (none)".to_string());
 
                 let detail = format!(
-                    "Tool: {}\nSession ID: {}\nProject: {}\nModel: {}\nCreated: {}\nTitle: {}\n{}",
+                    "Tool: {}\nSession ID: {}\nProject: {}\nCreated: {}\nTitle: {}\n{}",
                     session.tool,
                     session.session_id,
                     session.project_path.as_ref().unwrap_or(&"none".to_string()),
-                    session.model.as_ref().unwrap_or(&"unknown".to_string()),
                     format_beijing_time(&session.created_at),
                     session.title.as_ref().unwrap_or(&"(no title)".to_string()),
                     last_msg_line,
