@@ -37,7 +37,7 @@ enum Cli {
         action: String,
         session_id: String,
         #[arg(short, long)]
-        value: Option<String>,
+        value: String,
     },
     Title {
         session_id: String,
@@ -121,20 +121,18 @@ fn run_list(tool: Option<String>, tag: Option<String>, query: Option<String>) ->
     Ok(())
 }
 
-fn run_tag(action: &str, session_id: &str, value: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
+fn run_tag(action: &str, session_id: &str, value: &str) -> Result<(), Box<dyn std::error::Error>> {
     let db_path = get_db_path();
     let mut store = SqliteSessionStore::new(db_path)?;
 
     match action {
         "add" => {
-            let tag = value.ok_or("Tag value required: sm tag add <session_id> --value <tag>")?;
-            store.add_tag(session_id, tag)?;
-            println!("Added tag '{}' to session {}", tag, &session_id[..36.min(session_id.len())]);
+            store.add_tag(session_id, value)?;
+            println!("Added tag '{}' to session {}", value, &session_id[..36.min(session_id.len())]);
         }
         "remove" => {
-            let tag = value.ok_or("Tag value required: sm tag remove <session_id> --value <tag>")?;
-            store.remove_tag(session_id, tag)?;
-            println!("Removed tag '{}' from session {}", tag, &session_id[..36.min(session_id.len())]);
+            store.remove_tag(session_id, value)?;
+            println!("Removed tag '{}' from session {}", value, &session_id[..36.min(session_id.len())]);
         }
         "list" => {
             let tags = store.get_tags(session_id)?;
@@ -243,7 +241,7 @@ fn main() {
             }
         }
         Cli::Tag { action, session_id, value } => {
-            if let Err(e) = run_tag(&action, &session_id, value.as_deref()) {
+            if let Err(e) = run_tag(&action, &session_id, &value) {
                 error!("Tag command failed: {}", e);
                 std::process::exit(1);
             }

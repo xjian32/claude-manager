@@ -126,8 +126,10 @@ impl SessionStore for SqliteSessionStore {
             params_vec.push(Box::new(project_path.clone()));
         }
         if let Some(ref query) = filter.query {
-            conditions.push("(s.title LIKE ? OR s.session_id LIKE ?)".to_string());
+            conditions.push("(s.title LIKE ? OR s.session_id LIKE ? OR s.project_path LIKE ? OR EXISTS (SELECT 1 FROM session_tags st WHERE st.session_id = s.id AND st.tag LIKE ?))".to_string());
             let q = format!("%{}%", query);
+            params_vec.push(Box::new(q.clone()));
+            params_vec.push(Box::new(q.clone()));
             params_vec.push(Box::new(q.clone()));
             params_vec.push(Box::new(q));
         }
