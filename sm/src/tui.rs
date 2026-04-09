@@ -27,6 +27,8 @@ struct AppState {
     tags: Vec<String>,
     filter_tag: Option<String>,
     search_query: Option<String>,
+    claude_scanner: scanner_claude::ClaudeScanner,
+    opencode_scanner: scanner_opencode::OpenCodeScanner,
 }
 
 impl AppState {
@@ -37,6 +39,8 @@ impl AppState {
             tags: Vec::new(),
             filter_tag: None,
             search_query: None,
+            claude_scanner: scanner_claude::ClaudeScanner::new(),
+            opencode_scanner: scanner_opencode::OpenCodeScanner::new(),
         }
     }
 
@@ -66,6 +70,16 @@ impl AppState {
                 format!("opencode -s {}", s.session_id)
             }
         })
+    }
+
+    fn get_last_message(&self) -> Option<String> {
+        let session = self.sessions.get(self.selected)?;
+        let scanner: &dyn scanner_core::ToolScanner = if session.tool == "claude" {
+            &self.claude_scanner as &dyn scanner_core::ToolScanner
+        } else {
+            &self.opencode_scanner as &dyn scanner_core::ToolScanner
+        };
+        scanner.get_last_message(&session.session_id).ok().flatten()
     }
 }
 
@@ -139,14 +153,20 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
 
             // Detail panel
             if let Some(session) = state.sessions.get(state.selected) {
+                let last_msg = state.get_last_message();
+                let last_msg_line = last_msg
+                    .map(|m| format!("Last: {}", m))
+                    .unwrap_or_else(|| "Last: (none)".to_string());
+
                 let detail = format!(
-                    "Tool: {}\nSession ID: {}\nProject: {}\nModel: {}\nCreated: {}\nTitle: {}",
+                    "Tool: {}\nSession ID: {}\nProject: {}\nModel: {}\nCreated: {}\nTitle: {}\n{}",
                     session.tool,
                     session.session_id,
                     session.project_path.as_ref().unwrap_or(&"none".to_string()),
                     session.model.as_ref().unwrap_or(&"unknown".to_string()),
                     session.created_at,
                     session.title.as_ref().unwrap_or(&"(no title)".to_string()),
+                    last_msg_line,
                 );
                 let para = Paragraph::new(detail)
                     .block(Block::default().borders(Borders::ALL).title("Detail"));

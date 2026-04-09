@@ -1,7 +1,7 @@
 mod tui;
 
 use clap::Parser;
-use session_store::{SqliteSessionStore, SessionStore, SessionFilter};
+use session_store::{SqliteSessionStore, SessionStore, SessionFilter, SessionUpdate};
 use scanner_claude::ClaudeScanner;
 use scanner_opencode::OpenCodeScanner;
 use scanner_core::ToolScanner;
@@ -31,6 +31,17 @@ enum Cli {
     InstallHook {
         #[arg(long)]
         dry_run: bool,
+    },
+    Tag {
+        #[arg(short, long)]
+        action: String,
+        session_id: String,
+        #[arg(short, long)]
+        value: Option<String>,
+    },
+    Title {
+        session_id: String,
+        title: String,
     },
     Tui,
 }
@@ -98,7 +109,6 @@ fn run_list(tool: Option<String>, tag: Option<String>, query: Option<String>) ->
         return Ok(());
     }
 
-    // Simple table output
     println!("{:<36} {:<10} {:<40} {}", "ID", "TOOL", "PROJECT", "CREATED");
     println!("{}", "-".repeat(100));
     for s in sessions {
@@ -108,6 +118,62 @@ fn run_list(tool: Option<String>, tag: Option<String>, query: Option<String>) ->
         println!("{:<36} {:<10} {:<40} {}", &s.session_id[..36.min(s.session_id.len())], s.tool, proj, &s.created_at[..10]);
     }
 
+    Ok(())
+}
+
+fn run_tag(action: &str, session_id: &str, value: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
+    let db_path = get_db_path();
+    let mut store = SqliteSessionStore::new(db_path)?;
+
+    match action {
+        "add" => {
+            let tag = value.ok_or("Tag value required: sm tag add <session_id> --value <tag>")?;
+            store.add_tag(session_id, tag)?;
+            println!("Added tag '{}' to session {}", tag, &session_id[..36.min(session_id.len())]);
+        }
+        "remove" => {
+            let tag = value.ok_or("Tag value required: sm tag remove <session_id> --value <tag>")?;
+            store.remove_tag(session_id, tag)?;
+            println!("Removed tag '{}' from session {}", tag, &session_id[..36.min(session_id.len())]);
+        }
+        "list" => {
+            let tags = store.get_tags(session_id)?;
+            if tags.is_empty() {
+                println!("No tags for session {}", &session_id[..36.min(session_id.len())]);
+            } else {
+                println!("Tags for session {}: {}", &session_id[..36.min(session_id.len())], tags.join(", "));
+            }
+        }
+        _ => {
+            println!("Unknown action: {}. Use add, remove, or list.", action);
+        }
+    }
+    Ok(())
+}
+
+fn run_title(session_id: &str, title: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let db_path = get_db_path();
+    let mut store = SqliteSessionStore::new(db_path)?;
+
+    // Find session by session_id
+    let sessions = store.list_sessions(&SessionFilter {
+        tool: None,
+        tags: None,
+        project_path: None,
+        query: None,
+    })?;
+
+    let session = sessions.into_iter().find(|s| s.session_id == session_id);
+    if let Some(session) = session {
+        store.update_session(&session.id, &SessionUpdate {
+            title: Some(title.to_string()),
+            project_path: None,
+            metadata: None,
+        })?;
+        println!("Updated title to '{}' for session {}", title, &session_id[..36.min(session_id.len())]);
+    } else {
+        println!("Session not found: {}", session_id);
+    }
     Ok(())
 }
 
@@ -173,6 +239,18 @@ fn main() {
         Cli::InstallHook { dry_run } => {
             if let Err(e) = run_install_hook(dry_run) {
                 error!("Install hook failed: {}", e);
+                std::process::exit(1);
+            }
+        }
+        Cli::Tag { action, session_id, value } => {
+            if let Err(e) = run_tag(&action, &session_id, value.as_deref()) {
+                error!("Tag command failed: {}", e);
+                std::process::exit(1);
+            }
+        }
+        Cli::Title { session_id, title } => {
+            if let Err(e) = run_title(&session_id, &title) {
+                error!("Title command failed: {}", e);
                 std::process::exit(1);
             }
         }

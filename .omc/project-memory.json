@@ -93,9 +93,21 @@
   },
   "hotPaths": [
     {
+      "path": "sm/src/main.rs",
+      "accessCount": 17,
+      "lastAccessed": 1775731052778,
+      "type": "file"
+    },
+    {
       "path": "crates/session-store/src/store.rs",
       "accessCount": 13,
       "lastAccessed": 1775729998979,
+      "type": "file"
+    },
+    {
+      "path": "sm/src/tui.rs",
+      "accessCount": 13,
+      "lastAccessed": 1775731311394,
       "type": "file"
     },
     {
@@ -111,27 +123,21 @@
       "type": "file"
     },
     {
-      "path": "sm/src/tui.rs",
-      "accessCount": 7,
-      "lastAccessed": 1775729982611,
-      "type": "file"
-    },
-    {
-      "path": "sm/src/main.rs",
-      "accessCount": 3,
-      "lastAccessed": 1775729442246,
-      "type": "file"
-    },
-    {
       "path": "crates/scanner-opencode/src/lib.rs",
-      "accessCount": 2,
-      "lastAccessed": 1775729955218,
+      "accessCount": 7,
+      "lastAccessed": 1775731231711,
       "type": "directory"
     },
     {
       "path": "crates/scanner-core/src/lib.rs",
-      "accessCount": 1,
-      "lastAccessed": 1775729442383,
+      "accessCount": 4,
+      "lastAccessed": 1775731194659,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-opencode/Cargo.toml",
+      "accessCount": 2,
+      "lastAccessed": 1775730876588,
       "type": "file"
     },
     {

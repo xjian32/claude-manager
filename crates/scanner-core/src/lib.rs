@@ -24,4 +24,7 @@ pub struct ScannedSession {
 pub trait ToolScanner: Send + Sync {
     fn name(&self) -> &str;
     fn scan(&self) -> Result<Vec<ScannedSession>, ScannerError>;
+    fn get_last_message(&self, _session_id: &str) -> Result<Option<String>, ScannerError> {
+        Ok(None)
+    }
 }
