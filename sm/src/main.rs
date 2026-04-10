@@ -85,10 +85,20 @@ fn run_scan(verbose: bool) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    let mut results: Vec<(&str, usize, usize)> = Vec::new();
+
     for (name, scanner) in scanners {
         if verbose {
             println!("Scanning {}...", name);
         }
+
+        let before_count = store.list_sessions(&SessionFilter {
+            tool: Some(name.to_string()),
+            tags: None,
+            project_path: None,
+            query: None,
+        }).unwrap_or_default().len();
+
         match scanner.scan() {
             Ok(sessions) => {
                 for session in sessions {
@@ -97,7 +107,14 @@ fn run_scan(verbose: bool) -> Result<(), Box<dyn std::error::Error>> {
                     }
                     store.upsert_scanned(&session)?;
                 }
-                println!("{}: {} sessions", name, store.list_sessions(&SessionFilter { tool: Some(name.to_string()), ..Default::default() })?.len());
+                let after_count = store.list_sessions(&SessionFilter {
+                    tool: Some(name.to_string()),
+                    tags: None,
+                    project_path: None,
+                    query: None,
+                }).unwrap_or_default().len();
+                let new_count = after_count.saturating_sub(before_count);
+                results.push((name, new_count, after_count));
             }
             Err(e) => {
                 error!("Scanner {} failed: {}", name, e);
@@ -105,7 +122,15 @@ fn run_scan(verbose: bool) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    println!("Scan complete.");
+    // Print summary
+    if results.is_empty() {
+        println!("Scan complete. No scanners enabled.");
+    } else {
+        let parts: Vec<String> = results.iter()
+            .map(|(name, new, total)| format!("{}: 新增 {}, 总数 {}", name, new, total))
+            .collect();
+        println!("扫描完成：{}", parts.join(", "));
+    }
     Ok(())
 }
 

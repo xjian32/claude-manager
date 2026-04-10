@@ -270,18 +270,18 @@ async fn scan_sessions() -> Json<ScanResultDetail> {
             let scanner = ClaudeScanner::with_path(&p);
             match scanner.scan() {
                 Ok(sessions) => {
-                    let new_count = sessions.len();
-                    for session in sessions {
-                        if let Err(e) = store.upsert_scanned(&session) {
-                            eprintln!("Failed to upsert session: {}", e);
-                        }
-                    }
                     let total_count = store.list_sessions(&SessionFilter {
                         tool: Some("claude".to_string()),
                         tags: None,
                         project_path: None,
                         query: None,
                     }).unwrap_or_default().len();
+                    let new_count = total_count.saturating_sub(_before_count);
+                    for session in sessions {
+                        if let Err(e) = store.upsert_scanned(&session) {
+                            eprintln!("Failed to upsert session: {}", e);
+                        }
+                    }
                     tools.push(ToolCount {
                         name: "claude".to_string(),
                         new_count,
@@ -310,7 +310,6 @@ async fn scan_sessions() -> Json<ScanResultDetail> {
             let scanner = OpenCodeScanner::with_path(&p);
             match scanner.scan() {
                 Ok(sessions) => {
-                    let new_count = sessions.len();
                     for session in sessions {
                         if let Err(e) = store.upsert_scanned(&session) {
                             eprintln!("Failed to upsert session: {}", e);
@@ -322,6 +321,7 @@ async fn scan_sessions() -> Json<ScanResultDetail> {
                         project_path: None,
                         query: None,
                     }).unwrap_or_default().len();
+                    let new_count = total_count.saturating_sub(_before_count);
                     tools.push(ToolCount {
                         name: "opencode".to_string(),
                         new_count,
