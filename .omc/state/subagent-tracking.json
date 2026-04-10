@@ -1,17 +1,47 @@
 {
   "agents": [
     {
-      "agent_id": "af25af5acfb980be9",
-      "agent_type": "oh-my-claudecode:code-reviewer",
-      "started_at": "2026-04-09T10:10:18.613Z",
+      "agent_id": "aa57a2a01bc98424f",
+      "agent_type": "compound-engineering:document-review:feasibility-reviewer",
+      "started_at": "2026-04-10T03:02:05.446Z",
       "parent_mode": "none",
       "status": "completed",
-      "completed_at": "2026-04-09T10:16:41.828Z",
-      "duration_ms": 383215
+      "completed_at": "2026-04-10T03:04:47.457Z",
+      "duration_ms": 162011
+    },
+    {
+      "agent_id": "a9652ef6b1170f4c2",
+      "agent_type": "general-purpose",
+      "started_at": "2026-04-10T03:15:39.268Z",
+      "parent_mode": "none",
+      "status": "running"
+    },
+    {
+      "agent_id": "a6a856826e4a0181d",
+      "agent_type": "general-purpose",
+      "started_at": "2026-04-10T03:15:57.745Z",
+      "parent_mode": "none",
+      "status": "running"
+    },
+    {
+      "agent_id": "a7a4e29bc9906a29d",
+      "agent_type": "Explore",
+      "started_at": "2026-04-10T05:46:47.067Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-04-10T05:47:57.574Z",
+      "duration_ms": 70507
+    },
+    {
+      "agent_id": "a800eeacd9a8c3116",
+      "agent_type": "Plan",
+      "started_at": "2026-04-10T05:54:49.781Z",
+      "parent_mode": "none",
+      "status": "running"
     }
   ],
-  "total_spawned": 1,
-  "total_completed": 1,
+  "total_spawned": 5,
+  "total_completed": 2,
   "total_failed": 0,
-  "last_updated": "2026-04-09T10:16:41.932Z"
+  "last_updated": "2026-04-10T06:04:02.117Z"
 }

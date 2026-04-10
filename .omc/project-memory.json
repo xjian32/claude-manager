@@ -93,28 +93,40 @@
   },
   "hotPaths": [
     {
+      "path": "sm/src/tui.rs",
+      "accessCount": 83,
+      "lastAccessed": 1775800042039,
+      "type": "file"
+    },
+    {
       "path": "sm/src/main.rs",
-      "accessCount": 17,
-      "lastAccessed": 1775731052778,
+      "accessCount": 31,
+      "lastAccessed": 1775815226326,
+      "type": "file"
+    },
+    {
+      "path": "sm/src/web.rs",
+      "accessCount": 31,
+      "lastAccessed": 1775815319018,
       "type": "file"
     },
     {
       "path": "crates/session-store/src/store.rs",
-      "accessCount": 13,
-      "lastAccessed": 1775729998979,
-      "type": "file"
-    },
-    {
-      "path": "sm/src/tui.rs",
-      "accessCount": 13,
-      "lastAccessed": 1775731311394,
+      "accessCount": 15,
+      "lastAccessed": 1775735674818,
       "type": "file"
     },
     {
       "path": "crates/scanner-claude/src/lib.rs",
-      "accessCount": 10,
-      "lastAccessed": 1775729945607,
+      "accessCount": 15,
+      "lastAccessed": 1775800883896,
       "type": "file"
+    },
+    {
+      "path": "crates/scanner-opencode/src/lib.rs",
+      "accessCount": 11,
+      "lastAccessed": 1775800891984,
+      "type": "directory"
     },
     {
       "path": "crates/session-store/src/db.rs",
@@ -123,21 +135,69 @@
       "type": "file"
     },
     {
-      "path": "crates/scanner-opencode/src/lib.rs",
-      "accessCount": 7,
-      "lastAccessed": 1775731231711,
-      "type": "directory"
+      "path": "docs/superpowers/plans/2026-04-10-directory-grouping.md",
+      "accessCount": 6,
+      "lastAccessed": 1775790881606,
+      "type": "file"
+    },
+    {
+      "path": "sm/Cargo.toml",
+      "accessCount": 6,
+      "lastAccessed": 1775800716977,
+      "type": "file"
     },
     {
       "path": "crates/scanner-core/src/lib.rs",
-      "accessCount": 4,
-      "lastAccessed": 1775731194659,
+      "accessCount": 5,
+      "lastAccessed": 1775800022214,
       "type": "file"
     },
     {
       "path": "crates/scanner-opencode/Cargo.toml",
+      "accessCount": 5,
+      "lastAccessed": 1775800875396,
+      "type": "file"
+    },
+    {
+      "path": "sm/src/config.rs",
+      "accessCount": 5,
+      "lastAccessed": 1775801228321,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-claude/Cargo.toml",
+      "accessCount": 4,
+      "lastAccessed": 1775800867763,
+      "type": "file"
+    },
+    {
+      "path": "Cargo.toml",
+      "accessCount": 4,
+      "lastAccessed": 1775800990013,
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "accessCount": 3,
+      "lastAccessed": 1775802541556,
+      "type": "file"
+    },
+    {
+      "path": "docs/superpowers/specs/2026-04-10-directory-grouping-design.md",
       "accessCount": 2,
-      "lastAccessed": 1775730876588,
+      "lastAccessed": 1775790142425,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 2,
+      "lastAccessed": 1775790186816,
+      "type": "directory"
+    },
+    {
+      "path": "crates/scanner-generic/src/lib.rs",
+      "accessCount": 2,
+      "lastAccessed": 1775801272511,
       "type": "file"
     },
     {
@@ -159,33 +219,63 @@
       "type": "file"
     },
     {
-      "path": "",
-      "accessCount": 1,
-      "lastAccessed": 1775729451344,
-      "type": "directory"
-    },
-    {
-      "path": "sm/Cargo.toml",
-      "accessCount": 1,
-      "lastAccessed": 1775729640080,
-      "type": "file"
-    },
-    {
       "path": "crates/session-store/Cargo.toml",
       "accessCount": 1,
       "lastAccessed": 1775729640142,
       "type": "file"
     },
     {
-      "path": "crates/scanner-claude/Cargo.toml",
+      "path": "sm",
       "accessCount": 1,
-      "lastAccessed": 1775729640243,
+      "lastAccessed": 1775800739207,
+      "type": "directory"
+    },
+    {
+      "path": "crates/scanner-claude-code/Cargo.toml",
+      "accessCount": 1,
+      "lastAccessed": 1775801062494,
       "type": "file"
     },
     {
-      "path": "Cargo.toml",
+      "path": "crates/scanner-claude-code/src/lib.rs",
       "accessCount": 1,
-      "lastAccessed": 1775729640297,
+      "lastAccessed": 1775801079863,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-cursor/Cargo.toml",
+      "accessCount": 1,
+      "lastAccessed": 1775801087872,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-cursor/src/lib.rs",
+      "accessCount": 1,
+      "lastAccessed": 1775801102420,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-windsurf/Cargo.toml",
+      "accessCount": 1,
+      "lastAccessed": 1775801108285,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-windsurf/src/lib.rs",
+      "accessCount": 1,
+      "lastAccessed": 1775801124736,
+      "type": "file"
+    },
+    {
+      "path": "crates/scanner-generic/Cargo.toml",
+      "accessCount": 1,
+      "lastAccessed": 1775801130842,
+      "type": "file"
+    },
+    {
+      "path": "config.toml.example",
+      "accessCount": 1,
+      "lastAccessed": 1775801199514,
       "type": "file"
     }
   ],

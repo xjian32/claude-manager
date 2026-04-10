@@ -1,3 +1,11 @@
-{"t":0,"agent":"a040697","agent_type":"unknown","event":"agent_stop","success":true}
-{"t":0,"agent":"af25af5","agent_type":"code-reviewer","event":"agent_start","parent_mode":"none"}
-{"t":0,"agent":"af25af5","agent_type":"code-reviewer","event":"agent_stop","success":true,"duration_ms":383215}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"superpowers:writing-plans"}
+{"t":0,"agent":"aa57a2a","agent_type":"compound-engineering:document-review:feasibility-reviewer","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"aa57a2a","agent_type":"compound-engineering:document-review:feasibility-reviewer","event":"agent_stop","success":true,"duration_ms":162011}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"superpowers:subagent-driven-development"}
+{"t":0,"agent":"a2cff4a","agent_type":"unknown","event":"agent_stop","success":true}
+{"t":0,"agent":"a9652ef","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a6a8568","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a7a4e29","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a7a4e29","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":70507}
+{"t":0,"agent":"a800eea","agent_type":"Plan","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a6cc145","agent_type":"unknown","event":"agent_stop","success":true}

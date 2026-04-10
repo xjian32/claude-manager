@@ -76,7 +76,8 @@ pub struct ScanResult {
 #[derive(Debug, Serialize)]
 pub struct ToolCount {
     pub name: String,
-    pub count: usize,
+    pub new_count: usize,
+    pub total_count: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -259,16 +260,33 @@ async fn scan_sessions() -> Json<ScanResultDetail> {
         let path = cfg.scanner.claude.path
             .or_else(|| config::get_default_path("claude"));
         if let Some(p) = path {
+            let _before_count = store.list_sessions(&SessionFilter {
+                tool: Some("claude".to_string()),
+                tags: None,
+                project_path: None,
+                query: None,
+            }).unwrap_or_default().len();
+
             let scanner = ClaudeScanner::with_path(&p);
             match scanner.scan() {
                 Ok(sessions) => {
-                    let count = sessions.len();
+                    let new_count = sessions.len();
                     for session in sessions {
                         if let Err(e) = store.upsert_scanned(&session) {
                             eprintln!("Failed to upsert session: {}", e);
                         }
                     }
-                    tools.push(ToolCount { name: "claude".to_string(), count });
+                    let total_count = store.list_sessions(&SessionFilter {
+                        tool: Some("claude".to_string()),
+                        tags: None,
+                        project_path: None,
+                        query: None,
+                    }).unwrap_or_default().len();
+                    tools.push(ToolCount {
+                        name: "claude".to_string(),
+                        new_count,
+                        total_count,
+                    });
                 }
                 Err(e) => {
                     eprintln!("Claude scan failed: {}", e);
@@ -282,16 +300,33 @@ async fn scan_sessions() -> Json<ScanResultDetail> {
         let path = cfg.scanner.opencode.path
             .or_else(|| config::get_default_path("opencode"));
         if let Some(p) = path {
+            let _before_count = store.list_sessions(&SessionFilter {
+                tool: Some("opencode".to_string()),
+                tags: None,
+                project_path: None,
+                query: None,
+            }).unwrap_or_default().len();
+
             let scanner = OpenCodeScanner::with_path(&p);
             match scanner.scan() {
                 Ok(sessions) => {
-                    let count = sessions.len();
+                    let new_count = sessions.len();
                     for session in sessions {
                         if let Err(e) = store.upsert_scanned(&session) {
                             eprintln!("Failed to upsert session: {}", e);
                         }
                     }
-                    tools.push(ToolCount { name: "opencode".to_string(), count });
+                    let total_count = store.list_sessions(&SessionFilter {
+                        tool: Some("opencode".to_string()),
+                        tags: None,
+                        project_path: None,
+                        query: None,
+                    }).unwrap_or_default().len();
+                    tools.push(ToolCount {
+                        name: "opencode".to_string(),
+                        new_count,
+                        total_count,
+                    });
                 }
                 Err(e) => {
                     eprintln!("OpenCode scan failed: {}", e);
@@ -1190,8 +1225,9 @@ static HTML: &str = r#"<!DOCTYPE html>
                 const result = await res.json();
 
                 if (result.success) {
-                    const counts = result.tools.map(t => `${t.name}:${t.count}`).join(', ');
-                    showToast('扫描完成: ' + counts);
+                    const newCounts = result.tools.map(t => `${t.name}:${t.new_count}`).join(', ');
+                    const totalCounts = result.tools.map(t => `${t.name}:${t.total_count}`).join(', ');
+                    showToast(`扫描完成: 新增 ${newCounts}, 总数: ${totalCounts}`);
                     fetchSessions();
                 } else {
                     showToast('扫描失败: ' + result.message);

@@ -1,51 +1,107 @@
 {
-  "updatedAt": "2026-04-09T10:16:41.828Z",
+  "updatedAt": "2026-04-10T06:04:02.016Z",
   "missions": [
     {
       "id": "session:da97f303-9ee8-40f6-8be5-d8feae415d78:none",
       "source": "session",
       "name": "none",
       "objective": "Session mission",
-      "createdAt": "2026-04-09T10:10:18.613Z",
-      "updatedAt": "2026-04-09T10:16:41.828Z",
-      "status": "done",
-      "workerCount": 1,
+      "createdAt": "2026-04-10T03:02:05.446Z",
+      "updatedAt": "2026-04-10T06:04:02.016Z",
+      "status": "running",
+      "workerCount": 5,
       "taskCounts": {
-        "total": 1,
+        "total": 5,
         "pending": 0,
         "blocked": 0,
-        "inProgress": 0,
-        "completed": 1,
+        "inProgress": 3,
+        "completed": 2,
         "failed": 0
       },
       "agents": [
         {
-          "name": "code-reviewer:af25af5",
-          "role": "code-reviewer",
-          "ownership": "af25af5acfb980be9",
+          "name": "compound-engineering:document-review:feasibility-reviewer:aa57a2a",
+          "role": "compound-engineering:document-review:feasibility-reviewer",
+          "ownership": "aa57a2a01bc98424f",
           "status": "done",
           "currentStep": null,
           "latestUpdate": "completed",
           "completedSummary": null,
-          "updatedAt": "2026-04-09T10:16:41.828Z"
+          "updatedAt": "2026-04-10T06:04:02.016Z"
+        },
+        {
+          "name": "general-purpose:a9652ef",
+          "role": "general-purpose",
+          "ownership": "a9652ef6b1170f4c2",
+          "status": "running",
+          "currentStep": null,
+          "latestUpdate": null,
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T03:15:39.268Z"
+        },
+        {
+          "name": "general-purpose:a6a8568",
+          "role": "general-purpose",
+          "ownership": "a6a856826e4a0181d",
+          "status": "running",
+          "currentStep": null,
+          "latestUpdate": null,
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T03:15:57.745Z"
+        },
+        {
+          "name": "Explore:a7a4e29",
+          "role": "Explore",
+          "ownership": "a7a4e29bc9906a29d",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T05:47:57.574Z"
+        },
+        {
+          "name": "Plan:a800eea",
+          "role": "Plan",
+          "ownership": "a800eeacd9a8c3116",
+          "status": "running",
+          "currentStep": null,
+          "latestUpdate": null,
+          "completedSummary": null,
+          "updatedAt": "2026-04-10T05:54:49.781Z"
         }
       ],
       "timeline": [
         {
-          "id": "session-start:af25af5acfb980be9:2026-04-09T10:10:18.613Z",
-          "at": "2026-04-09T10:10:18.613Z",
+          "id": "session-start:a7a4e29bc9906a29d:2026-04-10T05:46:47.067Z",
+          "at": "2026-04-10T05:46:47.067Z",
           "kind": "update",
-          "agent": "code-reviewer:af25af5",
-          "detail": "started code-reviewer:af25af5",
-          "sourceKey": "session-start:af25af5acfb980be9"
+          "agent": "Explore:a7a4e29",
+          "detail": "started Explore:a7a4e29",
+          "sourceKey": "session-start:a7a4e29bc9906a29d"
         },
         {
-          "id": "session-stop:af25af5acfb980be9:2026-04-09T10:16:41.828Z",
-          "at": "2026-04-09T10:16:41.828Z",
+          "id": "session-stop:a7a4e29bc9906a29d:2026-04-10T05:47:57.574Z",
+          "at": "2026-04-10T05:47:57.574Z",
           "kind": "completion",
-          "agent": "code-reviewer:af25af5",
+          "agent": "Explore:a7a4e29",
           "detail": "completed",
-          "sourceKey": "session-stop:af25af5acfb980be9"
+          "sourceKey": "session-stop:a7a4e29bc9906a29d"
+        },
+        {
+          "id": "session-start:a800eeacd9a8c3116:2026-04-10T05:54:49.781Z",
+          "at": "2026-04-10T05:54:49.781Z",
+          "kind": "update",
+          "agent": "Plan:a800eea",
+          "detail": "started Plan:a800eea",
+          "sourceKey": "session-start:a800eeacd9a8c3116"
+        },
+        {
+          "id": "session-stop:a6cc14501f5a784d9:2026-04-10T06:04:02.016Z",
+          "at": "2026-04-10T06:04:02.016Z",
+          "kind": "completion",
+          "agent": "compound-engineering:document-review:feasibility-reviewer:aa57a2a",
+          "detail": "completed",
+          "sourceKey": "session-stop:a6cc14501f5a784d9"
         }
       ]
     }

@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cargo build --workspace 2>&1\",\"description\":\"Build after trait update\"}",
-  "error": "Exit code 101\n   Compiling scanner-core v0.1.0 (/Users/jaxx/Code/Other/claude_manager/session-manager/crates/scanner-core)\n   Compiling session-store v0.1.0 (/Users/jaxx/Code/Other/claude_manager/session-manager/crates/session-store)\n   Compiling scanner-opencode v0.1.0 (/Users/jaxx/Code/Other/claude_manager/session-manager/crates/scanner-opencode)\n   Compiling scanner-claude v0.1.0 (/Users/jaxx/Code/Other/claude_manager/session-manager/crates/scanner-claude)\nerror[E0308]: mismatched types\n   --...",
-  "timestamp": "2026-04-09T10:40:18.150Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"cargo test --workspace 2>&1\",\"timeout\":120000}",
+  "error": "Exit code 101\n   Compiling sm v0.1.0 (/Users/jaxx/Code/Other/claude_manager/session-manager/sm)\nwarning: fields `cursor`, `windsurf`, and `generic` are never read\n  --> sm/src/config.rs:20:9\n   |\n12 | pub struct ScannerConfig {\n   |            ------------- fields in this struct\n...\n20 |     pub cursor: ScannerEntry,\n   |         ^^^^^^\n21 |     #[serde(default)]\n22 |     pub windsurf: ScannerEntry,\n   |         ^^^^^^^^\n23 |     #[serde(default)]\n24 |     pub generic: GenericScannerConfig,\n   |...",
+  "timestamp": "2026-04-10T06:07:24.897Z",
+  "retry_count": 2
 }
