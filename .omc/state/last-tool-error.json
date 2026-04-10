@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cargo test --workspace 2>&1\",\"timeout\":120000}",
-  "error": "Exit code 101\n   Compiling sm v0.1.0 (/Users/jaxx/Code/Other/claude_manager/session-manager/sm)\nwarning: fields `cursor`, `windsurf`, and `generic` are never read\n  --> sm/src/config.rs:20:9\n   |\n12 | pub struct ScannerConfig {\n   |            ------------- fields in this struct\n...\n20 |     pub cursor: ScannerEntry,\n   |         ^^^^^^\n21 |     #[serde(default)]\n22 |     pub windsurf: ScannerEntry,\n   |         ^^^^^^^^\n23 |     #[serde(default)]\n24 |     pub generic: GenericScannerConfig,\n   |...",
-  "timestamp": "2026-04-10T06:07:24.897Z",
-  "retry_count": 2
-}
