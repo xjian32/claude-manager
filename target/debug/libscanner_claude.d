@@ -1,1 +1,0 @@
-/Users/jaxx/Code/Other/claude_manager/session-manager/target/debug/libscanner_claude.rlib: /Users/jaxx/Code/Other/claude_manager/session-manager/crates/scanner-claude/src/lib.rs /Users/jaxx/Code/Other/claude_manager/session-manager/crates/scanner-core/src/lib.rs
