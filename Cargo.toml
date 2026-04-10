@@ -5,6 +5,10 @@ members = [
     "crates/scanner-core",
     "crates/scanner-claude",
     "crates/scanner-opencode",
+    "crates/scanner-claude-code",
+    "crates/scanner-cursor",
+    "crates/scanner-windsurf",
+    "crates/scanner-generic",
     "sm",
 ]
 
@@ -31,4 +35,8 @@ toml = "0.8"
 scanner-core = { path = "crates/scanner-core" }
 scanner-claude = { path = "crates/scanner-claude" }
 scanner-opencode = { path = "crates/scanner-opencode" }
+scanner-claude-code = { path = "crates/scanner-claude-code" }
+scanner-cursor = { path = "crates/scanner-cursor" }
+scanner-windsurf = { path = "crates/scanner-windsurf" }
+scanner-generic = { path = "crates/scanner-generic" }
 session-store = { path = "crates/session-store" }

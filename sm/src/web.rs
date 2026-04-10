@@ -1,3 +1,5 @@
+mod config;
+
 use axum::{
     extract::Query,
     routing::{get, post},
@@ -8,6 +10,10 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+
+use scanner_claude::ClaudeScanner;
+use scanner_opencode::OpenCodeScanner;
+use scanner_core::ToolScanner;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Session {
@@ -57,6 +63,27 @@ pub struct TagUpdate {
     pub session_id: String,
     pub action: String,
     pub value: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ScanResult {
+    pub success: bool,
+    pub claude: usize,
+    pub opencode: usize,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ToolCount {
+    pub name: String,
+    pub count: usize,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ScanResultDetail {
+    pub success: bool,
+    pub tools: Vec<ToolCount>,
+    pub message: String,
 }
 
 fn get_db_path() -> PathBuf {
@@ -211,6 +238,75 @@ async fn update_tag(Json(payload): Json<TagUpdate>) -> Json<bool> {
     Json(result.is_ok())
 }
 
+async fn scan_sessions() -> Json<ScanResultDetail> {
+    let db_path = get_db_path();
+    let mut store = match SqliteSessionStore::new(db_path) {
+        Ok(s) => s,
+        Err(e) => {
+            return Json(ScanResultDetail {
+                success: false,
+                tools: vec![],
+                message: format!("Failed to open database: {}", e),
+            });
+        }
+    };
+
+    let cfg = config::load_config();
+    let mut tools: Vec<ToolCount> = Vec::new();
+
+    // Claude scanner
+    if cfg.scanner.claude.enabled {
+        let path = cfg.scanner.claude.path
+            .or_else(|| config::get_default_path("claude"));
+        if let Some(p) = path {
+            let scanner = ClaudeScanner::with_path(&p);
+            match scanner.scan() {
+                Ok(sessions) => {
+                    let count = sessions.len();
+                    for session in sessions {
+                        if let Err(e) = store.upsert_scanned(&session) {
+                            eprintln!("Failed to upsert session: {}", e);
+                        }
+                    }
+                    tools.push(ToolCount { name: "claude".to_string(), count });
+                }
+                Err(e) => {
+                    eprintln!("Claude scan failed: {}", e);
+                }
+            }
+        }
+    }
+
+    // OpenCode scanner
+    if cfg.scanner.opencode.enabled {
+        let path = cfg.scanner.opencode.path
+            .or_else(|| config::get_default_path("opencode"));
+        if let Some(p) = path {
+            let scanner = OpenCodeScanner::with_path(&p);
+            match scanner.scan() {
+                Ok(sessions) => {
+                    let count = sessions.len();
+                    for session in sessions {
+                        if let Err(e) = store.upsert_scanned(&session) {
+                            eprintln!("Failed to upsert session: {}", e);
+                        }
+                    }
+                    tools.push(ToolCount { name: "opencode".to_string(), count });
+                }
+                Err(e) => {
+                    eprintln!("OpenCode scan failed: {}", e);
+                }
+            }
+        }
+    }
+
+    Json(ScanResultDetail {
+        success: true,
+        tools,
+        message: "Scan complete".to_string(),
+    })
+}
+
 async fn get_resume_command(Query(params): Query<ListParams>) -> Json<Option<String>> {
     let db_path = get_db_path();
     let store = match SqliteSessionStore::new(db_path) {
@@ -251,6 +347,7 @@ pub async fn run_server() {
         .route("/api/title", post(update_title))
         .route("/api/tag", post(update_tag))
         .route("/api/resume", get(get_resume_command))
+        .route("/api/scan", post(scan_sessions))
         .route("/", get(index));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
@@ -537,6 +634,28 @@ static HTML: &str = r#"<!DOCTYPE html>
             background: var(--border);
         }
 
+        .btn-scan {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            transition: all 0.15s;
+        }
+
+        .btn-scan:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-scan:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-danger {
             background: rgba(239, 68, 68, 0.1);
             color: #ef4444;
@@ -774,6 +893,7 @@ static HTML: &str = r#"<!DOCTYPE html>
                     <span class="stat-label">Total</span>
                 </div>
             </div>
+            <button class="btn-scan" id="scan-btn" onclick="triggerScan()">🔄 扫描</button>
         </header>
 
         <main>
@@ -1058,6 +1178,30 @@ static HTML: &str = r#"<!DOCTYPE html>
             toast.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        async function triggerScan() {
+            const btn = document.getElementById('scan-btn');
+            btn.disabled = true;
+            btn.textContent = '扫描中...';
+
+            try {
+                const res = await fetch('/api/scan', { method: 'POST' });
+                const result = await res.json();
+
+                if (result.success) {
+                    const counts = result.tools.map(t => `${t.name}:${t.count}`).join(', ');
+                    showToast('扫描完成: ' + counts);
+                    fetchSessions();
+                } else {
+                    showToast('扫描失败: ' + result.message);
+                }
+            } catch (e) {
+                showToast('扫描失败: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔄 扫描';
+            }
         }
 
         function filterByTag(tag) {

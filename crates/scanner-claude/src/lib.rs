@@ -16,6 +16,17 @@ impl ClaudeScanner {
         }
     }
 
+    pub fn with_path(path: &str) -> Self {
+        let path_buf = if path.starts_with('~') {
+            dirs::home_dir()
+                .map(|h| h.join(path.trim_start_matches('~').trim_start_matches('/')))
+                .unwrap_or_else(|| PathBuf::from(path))
+        } else {
+            PathBuf::from(path)
+        };
+        Self::with_dir(path_buf)
+    }
+
     pub fn with_dir(session_dir: PathBuf) -> Self {
         Self {
             session_dir: session_dir.clone(),

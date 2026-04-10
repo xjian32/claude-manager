@@ -1,16 +1,16 @@
 use scanner_core::{ScannedSession, ToolScanner, ScannerError};
 use std::path::PathBuf;
 
-pub struct OpenCodeScanner {
-    db_path: PathBuf,
+pub struct CursorScanner {
+    data_dir: PathBuf,
 }
 
-impl OpenCodeScanner {
+impl CursorScanner {
     pub fn new() -> Self {
-        let db_path = dirs::home_dir()
-            .map(|h| h.join(".local/share/opencode/opencode.db"))
-            .unwrap_or_else(|| PathBuf::from("~/.local/share/opencode/opencode.db"));
-        Self { db_path }
+        let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("~"));
+        Self {
+            data_dir: home.join(".cursor.chat/data"),
+        }
     }
 
     pub fn with_path(path: &str) -> Self {
@@ -21,27 +21,18 @@ impl OpenCodeScanner {
         } else {
             PathBuf::from(path)
         };
-        Self::with_db(path_buf)
+        Self { data_dir: path_buf }
     }
 
-    pub fn with_db(db_path: PathBuf) -> Self {
-        Self { db_path }
-    }
-}
-
-impl ToolScanner for OpenCodeScanner {
-    fn name(&self) -> &str {
-        "opencode"
-    }
-
-    fn scan(&self) -> Result<Vec<ScannedSession>, ScannerError> {
+    fn scan_sqlite(&self) -> Result<Vec<ScannedSession>, ScannerError> {
         let mut sessions = Vec::new();
+        let db_path = self.data_dir.join("cursor.chat.db");
 
-        if !self.db_path.exists() {
+        if !db_path.exists() {
             return Ok(sessions);
         }
 
-        let conn = match rusqlite::Connection::open(&self.db_path) {
+        let conn = match rusqlite::Connection::open(&db_path) {
             Ok(c) => c,
             Err(_) => return Ok(sessions),
         };
@@ -71,12 +62,12 @@ impl ToolScanner for OpenCodeScanner {
                 .to_rfc3339();
 
             let metadata = serde_json::to_string(&serde_json::json!({
-                "source": "opencode_db",
+                "source": "cursor_db",
                 "title": title,
             })).ok();
 
             sessions.push(ScannedSession {
-                tool: "opencode".to_string(),
+                tool: "cursor".to_string(),
                 session_id,
                 project_path: Some(directory),
                 model: None,
@@ -87,35 +78,15 @@ impl ToolScanner for OpenCodeScanner {
 
         Ok(sessions)
     }
+}
 
-    fn get_last_message(&self, session_id: &str) -> Result<Option<String>, ScannerError> {
-        if !self.db_path.exists() {
-            return Ok(None);
-        }
+impl ToolScanner for CursorScanner {
+    fn name(&self) -> &str {
+        "cursor"
+    }
 
-        let conn = match rusqlite::Connection::open(&self.db_path) {
-            Ok(c) => c,
-            Err(_) => return Ok(None),
-        };
-
-        let result: Option<String> = conn.query_row(
-            "SELECT data FROM message WHERE session_id = ?1 AND data LIKE '%\"role\":\"user\"%' ORDER BY time_created DESC LIMIT 1",
-            [session_id],
-            |row| {
-                let data: String = row.get(0)?;
-                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&data) {
-                    let summary = json.get("summary")
-                        .and_then(|s| s.get("title"))
-                        .and_then(|t| t.as_str())
-                        .map(String::from);
-                    Ok(summary)
-                } else {
-                    Ok(None)
-                }
-            },
-        ).ok().flatten();
-
-        Ok(result)
+    fn scan(&self) -> Result<Vec<ScannedSession>, ScannerError> {
+        self.scan_sqlite()
     }
 }
 
@@ -125,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_scan_format() {
-        let scanner = OpenCodeScanner::new();
+        let scanner = CursorScanner::new();
         let result = scanner.scan();
         assert!(result.is_ok());
     }

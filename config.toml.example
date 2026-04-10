@@ -1,0 +1,28 @@
+# Session Manager Configuration
+# Copy to ~/.config/session-manager/config.toml
+
+[scanner.claude]
+enabled = true
+# path = "~/.claude/sessions"  # Optional, uses default if not specified
+
+[scanner.opencode]
+enabled = true
+# path = "~/.local/share/opencode"  # Optional, uses default if not specified
+
+[scanner.claude-code]
+enabled = false
+# path = "~/.claude_code/sessions"
+
+[scanner.cursor]
+enabled = false
+# path = "~/.cursor.chat/data"
+
+[scanner.windsurf]
+enabled = false
+# path = "~/.windsurf/history"
+
+[scanner.generic]
+enabled = false
+# sources = [
+#     { name = "my-sessions", path = "/path/to/sessions", pattern = "*.json" },
+# ]

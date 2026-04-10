@@ -1,3 +1,4 @@
+mod config;
 mod tui;
 
 use clap::Parser;
@@ -46,7 +47,7 @@ enum Cli {
     Tui,
 }
 
-fn get_db_path() -> PathBuf {
+pub fn get_db_path() -> PathBuf {
     if let Some(proj_dirs) = ProjectDirs::from("com", "session-manager", "sm") {
         let data_dir = proj_dirs.data_local_dir();
         std::fs::create_dir_all(data_dir).ok();
@@ -60,10 +61,29 @@ fn run_scan(verbose: bool) -> Result<(), Box<dyn std::error::Error>> {
     let db_path = get_db_path();
     let mut store = SqliteSessionStore::new(db_path)?;
 
-    let scanners: Vec<(&str, Box<dyn ToolScanner>)> = vec![
-        ("claude", Box::new(ClaudeScanner::new()) as Box<dyn ToolScanner>),
-        ("opencode", Box::new(OpenCodeScanner::new()) as Box<dyn ToolScanner>),
-    ];
+    let cfg = config::load_config();
+
+    let mut scanners: Vec<(&str, Box<dyn ToolScanner>)> = Vec::new();
+
+    // Claude scanner
+    if cfg.scanner.claude.enabled {
+        let path = cfg.scanner.claude.path
+            .or_else(|| config::get_default_path("claude"));
+        if let Some(p) = path {
+            let scanner = ClaudeScanner::with_path(&p);
+            scanners.push(("claude", Box::new(scanner) as Box<dyn ToolScanner>));
+        }
+    }
+
+    // OpenCode scanner
+    if cfg.scanner.opencode.enabled {
+        let path = cfg.scanner.opencode.path
+            .or_else(|| config::get_default_path("opencode"));
+        if let Some(p) = path {
+            let scanner = OpenCodeScanner::with_path(&p);
+            scanners.push(("opencode", Box::new(scanner) as Box<dyn ToolScanner>));
+        }
+    }
 
     for (name, scanner) in scanners {
         if verbose {
