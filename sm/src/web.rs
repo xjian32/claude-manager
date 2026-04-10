@@ -919,14 +919,17 @@ static HTML: &str = r#"<!DOCTYPE html>
             sessionList.innerHTML = groups.map((g, gi) => {
                 const isGroupSelected = selectedGroup === gi && selectedChild === 0;
                 const expandIcon = g.isExpanded ? '[-]' : '[+]';
-                const counts = `Claude:${g.claude}, OpenCode:${g.opencode}`;
+                const counts = [];
+                if (g.claude > 0) counts.push(`Claude:${g.claude}`);
+                if (g.opencode > 0) counts.push(`OpenCode:${g.opencode}`);
+                const countsStr = counts.length > 0 ? counts.join(', ') : '';
 
                 let html = '';
                 if (g.isExpanded) {
                     html += `<div class="session-item ${isGroupSelected ? 'selected' : ''}" onclick="selectGroup(${gi}, 0)">
                         <span class="expand-icon">${expandIcon}</span>
                         <span class="session-project">${g.dirName}</span>
-                        <span style="color: var(--text-muted); font-size: 12px;">(${counts})</span>
+                        ${countsStr ? `<span style="color: var(--text-muted); font-size: 12px;">(${countsStr})</span>` : ''}
                         <span style="color: var(--text-muted); font-size: 11px; margin-left: auto;">latest: ${g.latestTime}</span>
                     </div>`;
                     g.sessions.forEach((s, si) => {
@@ -944,7 +947,7 @@ static HTML: &str = r#"<!DOCTYPE html>
                     html = `<div class="session-item ${isGroupSelected ? 'selected' : ''}" onclick="selectGroup(${gi}, 0)">
                         <span class="expand-icon">${expandIcon}</span>
                         <span class="session-project">${g.dirName}</span>
-                        <span style="color: var(--text-muted); font-size: 12px;">(${counts})</span>
+                        ${countsStr ? `<span style="color: var(--text-muted); font-size: 12px;">(${countsStr})</span>` : ''}
                         <span style="color: var(--text-muted); font-size: 11px; margin-left: auto;">latest: ${g.latestTime}</span>
                     </div>`;
                 }

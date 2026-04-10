@@ -1,7 +1,7 @@
 use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout},
-    style::Style,
+    style::{Style, Modifier},
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph},
     Terminal,
 };
@@ -248,7 +248,11 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
                 let claude: usize = state.groups.iter().map(|g| g.tool_counts.0).sum();
                 let opencode: usize = state.groups.iter().map(|g| g.tool_counts.1).sum();
                 let total: usize = state.groups.iter().map(|g| g.sessions.len()).sum();
-                format!("Claude: {}, OpenCode: {}, Total: {}", claude, opencode, total)
+                let mut parts = Vec::new();
+                if claude > 0 { parts.push(format!("Claude: {}", claude)); }
+                if opencode > 0 { parts.push(format!("OpenCode: {}", opencode)); }
+                parts.push(format!("Total: {}", total));
+                parts.join(", ")
             };
             let header_text = if state.title_edit_active {
                 format!("Title: {}_ (Enter=save, Esc=cancel) [{}]", state.title_edit_buffer, counts)
@@ -269,6 +273,8 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
 
             // Session list (stateful for scrolling)
             let mut items = Vec::new();
+            let mut list_selection = None;
+
             for (i, group) in state.groups.iter().enumerate() {
                 let is_selected = i == state.selected && group.selected_child == 0;
                 let indicator = if group.is_expanded { "[-]" } else { "[+]" };
@@ -276,26 +282,45 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
 
                 if group.is_expanded {
                     // 目录行
-                    let line = if is_selected {
-                        format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time)
+                    let line = format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time);
+                    let item = if is_selected {
+                        list_selection = Some(items.len());
+                        ListItem::new(line).style(Style::default().add_modifier(Modifier::REVERSED))
                     } else {
-                        format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time)
+                        ListItem::new(line)
                     };
-                    items.push(ListItem::new(line));
+                    items.push(item);
 
                     // 子项
                     for (j, s) in group.sessions.iter().enumerate() {
-                        let _child_selected = i == state.selected && j == group.selected_child;
+                        let child_selected = i == state.selected && j == group.selected_child;
                         let prefix = "  ";
                         let title = s.title.as_ref().map(|t| t.as_str()).unwrap_or("");
                         let line = format!("{} [{}] {} - {} - {}",
                             prefix, s.tool, &s.session_id[..8.min(s.session_id.len())], title, format_beijing_time(&s.created_at));
-                        items.push(ListItem::new(line));
+                        let item = if child_selected {
+                            list_selection = Some(items.len());
+                            ListItem::new(line).style(Style::default().add_modifier(Modifier::REVERSED))
+                        } else {
+                            ListItem::new(line)
+                        };
+                        items.push(item);
                     }
                 } else {
                     let line = format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time);
-                    items.push(ListItem::new(line));
+                    let item = if is_selected {
+                        list_selection = Some(items.len());
+                        ListItem::new(line).style(Style::default().add_modifier(Modifier::REVERSED))
+                    } else {
+                        ListItem::new(line)
+                    };
+                    items.push(item);
                 }
+            }
+
+            // Update list_state selection to match flattened item index
+            if let Some(idx) = list_selection {
+                list_state.select(Some(idx));
             }
 
             let list = List::new(items)
