@@ -30,8 +30,18 @@ pub fn get_db_path() -> PathBuf {
     }
 }
 
-struct AppState {
+struct SessionGroup {
+    path: String,
+    dir_name: String,
+    tool_counts: (usize, usize),
+    latest_time: String,
     sessions: Vec<session_store::Session>,
+    is_expanded: bool,
+    selected_child: usize,
+}
+
+struct AppState {
+    groups: Vec<SessionGroup>,
     selected: usize,
     tags: Vec<String>,
     filter_tag: Option<String>,
@@ -47,7 +57,7 @@ struct AppState {
 impl AppState {
     fn new() -> Self {
         Self {
-            sessions: Vec::new(),
+            groups: Vec::new(),
             selected: 0,
             tags: Vec::new(),
             filter_tag: None,
@@ -71,26 +81,64 @@ impl AppState {
                 project_path: None,
                 query: self.search_query.clone(),
             };
-            self.sessions = store.list_sessions(&filter).unwrap_or_default();
+            let sessions = store.list_sessions(&filter).unwrap_or_default();
+            self.groups = Self::group_sessions(sessions);
             self.tags = store.list_all_tags().unwrap_or_default();
-            if self.selected >= self.sessions.len() {
-                self.selected = self.sessions.len().saturating_sub(1);
+            if self.selected >= self.groups.len() {
+                self.selected = self.groups.len().saturating_sub(1);
             }
         }
     }
 
-    fn copy_resume_cmd(&self) -> Option<String> {
-        self.sessions.get(self.selected).map(|s| {
-            if s.tool == "claude" {
-                format!("claude --resume {}", s.session_id)
-            } else {
-                format!("opencode -s {}", s.session_id)
+    fn group_sessions(sessions: Vec<session_store::Session>) -> Vec<SessionGroup> {
+        use std::collections::HashMap;
+        let mut map: HashMap<String, Vec<session_store::Session>> = HashMap::new();
+
+        for s in sessions {
+            let path = s.project_path.clone().unwrap_or_else(|| "unknown".to_string());
+            map.entry(path).or_insert_with(Vec::new).push(s);
+        }
+
+        let mut groups: Vec<SessionGroup> = map.into_iter().map(|(path, mut sessions)| {
+            sessions.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+            let dir_name = std::path::Path::new(&path)
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(&path)
+                .to_string();
+            let claude = sessions.iter().filter(|s| s.tool == "claude").count();
+            let opencode = sessions.iter().filter(|s| s.tool == "opencode").count();
+            let latest_time = sessions.first()
+                .map(|s| format_beijing_time(&s.created_at))
+                .unwrap_or_default();
+            SessionGroup {
+                path,
+                dir_name,
+                tool_counts: (claude, opencode),
+                latest_time,
+                sessions,
+                is_expanded: false,
+                selected_child: 0,
             }
+        }).collect();
+
+        groups.sort_by(|a, b| b.latest_time.cmp(&a.latest_time));
+        groups
+    }
+
+    fn copy_resume_cmd(&self) -> Option<String> {
+        let group = self.groups.get(self.selected)?;
+        let session = group.sessions.get(group.selected_child)?;
+        Some(if session.tool == "claude" {
+            format!("claude --resume {}", session.session_id)
+        } else {
+            format!("opencode -s {}", session.session_id)
         })
     }
 
     fn get_last_message(&self) -> Option<String> {
-        let session = self.sessions.get(self.selected)?;
+        let group = self.groups.get(self.selected)?;
+        let session = group.sessions.get(group.selected_child)?;
         let scanner: &dyn scanner_core::ToolScanner = if session.tool == "claude" {
             &self.claude_scanner as &dyn scanner_core::ToolScanner
         } else {
@@ -105,6 +153,11 @@ impl AppState {
         self.search_active = false;
         self.search_buffer.clear();
         self.load_sessions();
+        // 折叠所有分组
+        for group in &mut self.groups {
+            group.is_expanded = false;
+            group.selected_child = 0;
+        }
     }
 
     fn reset_search(&mut self) {
@@ -113,19 +166,25 @@ impl AppState {
         self.search_buffer.clear();
         self.filter_tag = None;
         self.load_sessions();
+        for group in &mut self.groups {
+            group.is_expanded = false;
+            group.selected_child = 0;
+        }
     }
 
     fn submit_title_edit(&mut self) {
         if !self.title_edit_buffer.is_empty() {
-            if let Some(session) = self.sessions.get(self.selected) {
-                let db_path = get_db_path();
-                if let Ok(mut store) = SqliteSessionStore::new(db_path) {
-                    let _ = store.update_session(&session.id, &session_store::SessionUpdate {
-                        title: Some(self.title_edit_buffer.clone()),
-                        project_path: None,
-                        metadata: None,
-                    });
-                    self.load_sessions();
+            if let Some(group) = self.groups.get(self.selected) {
+                if let Some(session) = group.sessions.get(group.selected_child) {
+                    let db_path = get_db_path();
+                    if let Ok(mut store) = SqliteSessionStore::new(db_path) {
+                        let _ = store.update_session(&session.id, &session_store::SessionUpdate {
+                            title: Some(self.title_edit_buffer.clone()),
+                            project_path: None,
+                            metadata: None,
+                        });
+                        self.load_sessions();
+                    }
                 }
             }
         }
@@ -139,9 +198,11 @@ impl AppState {
     }
 
     fn start_title_edit(&mut self) {
-        if let Some(session) = self.sessions.get(self.selected) {
-            self.title_edit_buffer = session.title.clone().unwrap_or_default();
-            self.title_edit_active = true;
+        if let Some(group) = self.groups.get(self.selected) {
+            if let Some(session) = group.sessions.get(group.selected_child) {
+                self.title_edit_buffer = session.title.clone().unwrap_or_default();
+                self.title_edit_active = true;
+            }
         }
     }
 }
@@ -184,9 +245,9 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
 
             // Header / Search bar
             let counts = {
-                let claude: usize = state.sessions.iter().filter(|s| s.tool == "claude").count();
-                let opencode: usize = state.sessions.iter().filter(|s| s.tool == "opencode").count();
-                let total = state.sessions.len();
+                let claude: usize = state.groups.iter().map(|g| g.tool_counts.0).sum();
+                let opencode: usize = state.groups.iter().map(|g| g.tool_counts.1).sum();
+                let total: usize = state.groups.iter().map(|g| g.sessions.len()).sum();
                 format!("Claude: {}, OpenCode: {}, Total: {}", claude, opencode, total)
             };
             let header_text = if state.title_edit_active {
@@ -207,22 +268,35 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
                 .split(chunks[1]);
 
             // Session list (stateful for scrolling)
-            let items: Vec<ListItem> = state.sessions.iter().enumerate().map(|(i, s)| {
-                let proj = s.project_path.as_ref().map(|p| {
-                    std::path::Path::new(p)
-                        .file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or(p)
-                        .to_string()
-                }).unwrap_or_else(|| "unknown".to_string());
+            let mut items = Vec::new();
+            for (i, group) in state.groups.iter().enumerate() {
+                let is_selected = i == state.selected && group.selected_child == 0;
+                let indicator = if group.is_expanded { "[-]" } else { "[+]" };
+                let counts = format!("Claude:{}, OpenCode:{}", group.tool_counts.0, group.tool_counts.1);
 
-                let line = if i == state.selected {
-                    format!("[{}] {} ({})", s.tool, &s.session_id[..8.min(s.session_id.len())], proj)
+                if group.is_expanded {
+                    // 目录行
+                    let line = if is_selected {
+                        format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time)
+                    } else {
+                        format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time)
+                    };
+                    items.push(ListItem::new(line));
+
+                    // 子项
+                    for (j, s) in group.sessions.iter().enumerate() {
+                        let _child_selected = i == state.selected && j == group.selected_child;
+                        let prefix = "  ";
+                        let title = s.title.as_ref().map(|t| t.as_str()).unwrap_or("");
+                        let line = format!("{} [{}] {} - {} - {}",
+                            prefix, s.tool, &s.session_id[..8.min(s.session_id.len())], title, format_beijing_time(&s.created_at));
+                        items.push(ListItem::new(line));
+                    }
                 } else {
-                    format!("{} {} ({})", s.tool, &s.session_id[..8.min(s.session_id.len())], proj)
-                };
-                ListItem::new(line)
-            }).collect();
+                    let line = format!("{} {} ({}) - latest: {}", indicator, &group.dir_name, counts, group.latest_time);
+                    items.push(ListItem::new(line));
+                }
+            }
 
             let list = List::new(items)
                 .block(Block::default().borders(Borders::ALL).title("Sessions"))
@@ -231,24 +305,26 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
             f.render_stateful_widget(list, content_chunks[0], &mut list_state);
 
             // Detail panel
-            if let Some(session) = state.sessions.get(state.selected) {
-                let last_msg = state.get_last_message();
-                let last_msg_line = last_msg
-                    .map(|m| format!("Last: {}", m))
-                    .unwrap_or_else(|| "Last: (none)".to_string());
+            if let Some(group) = state.groups.get(state.selected) {
+                if let Some(session) = group.sessions.get(group.selected_child) {
+                    let last_msg = state.get_last_message();
+                    let last_msg_line = last_msg
+                        .map(|m| format!("Last: {}", m))
+                        .unwrap_or_else(|| "Last: (none)".to_string());
 
-                let detail = format!(
-                    "Tool: {}\nSession ID: {}\nProject: {}\nCreated: {}\nTitle: {}\n{}",
-                    session.tool,
-                    session.session_id,
-                    session.project_path.as_ref().unwrap_or(&"none".to_string()),
-                    format_beijing_time(&session.created_at),
-                    session.title.as_ref().unwrap_or(&"(no title)".to_string()),
-                    last_msg_line,
-                );
-                let para = Paragraph::new(detail)
-                    .block(Block::default().borders(Borders::ALL).title("Detail"));
-                f.render_widget(para, content_chunks[1]);
+                    let detail = format!(
+                        "Tool: {}\nSession ID: {}\nProject: {}\nCreated: {}\nTitle: {}\n{}",
+                        session.tool,
+                        session.session_id,
+                        session.project_path.as_ref().unwrap_or(&"none".to_string()),
+                        format_beijing_time(&session.created_at),
+                        session.title.as_ref().unwrap_or(&"(no title)".to_string()),
+                        last_msg_line,
+                    );
+                    let para = Paragraph::new(detail)
+                        .block(Block::default().borders(Borders::ALL).title("Detail"));
+                    f.render_widget(para, content_chunks[1]);
+                }
             }
 
             // Tags bar
@@ -309,22 +385,59 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 match key.code {
                     KeyCode::Down => {
-                        if state.selected + 1 < state.sessions.len() {
-                            state.selected += 1;
-                            list_state.select(Some(state.selected));
+                        if state.groups.is_empty() { continue; }
+
+                        let group = &mut state.groups[state.selected];
+                        if group.is_expanded {
+                            if group.selected_child < group.sessions.len() - 1 {
+                                group.selected_child += 1;
+                            } else if state.selected < state.groups.len() - 1 {
+                                state.selected += 1;
+                                state.groups[state.selected].selected_child = 0;
+                                state.groups[state.selected].is_expanded = false;
+                            }
+                        } else {
+                            if state.selected < state.groups.len() - 1 {
+                                state.selected += 1;
+                            }
                         }
+                        list_state.select(Some(state.selected));
                     }
                     KeyCode::Up => {
-                        if state.selected > 0 {
-                            state.selected -= 1;
-                            list_state.select(Some(state.selected));
+                        if state.groups.is_empty() { continue; }
+
+                        let group = &mut state.groups[state.selected];
+                        if group.is_expanded {
+                            if group.selected_child > 0 {
+                                group.selected_child -= 1;
+                            } else if state.selected > 0 {
+                                state.selected -= 1;
+                                let prev_group = &state.groups[state.selected];
+                                state.groups[state.selected].selected_child = prev_group.sessions.len().saturating_sub(1);
+                            }
+                        } else {
+                            if state.selected > 0 {
+                                state.selected -= 1;
+                            }
                         }
+                        list_state.select(Some(state.selected));
                     }
                     KeyCode::Enter => {
-                        if let Some(cmd) = state.copy_resume_cmd() {
-                            if let Ok(mut clipboard) = arboard::Clipboard::new() {
-                                let _ = clipboard.set_text(&cmd);
-                                println!("\nCopied: {}\n", cmd);
+                        if state.groups.is_empty() { continue; }
+                        let group = &state.groups[state.selected];
+                        if group.is_expanded && group.selected_child > 0 {
+                            // 在子项上,复制 resume
+                            if let Some(cmd) = state.copy_resume_cmd() {
+                                if let Ok(mut clipboard) = arboard::Clipboard::new() {
+                                    let _ = clipboard.set_text(&cmd);
+                                    println!("\nCopied: {}\n", cmd);
+                                }
+                            }
+                        } else {
+                            // 在目录行上,展开/折叠
+                            state.groups[state.selected].is_expanded = !state.groups[state.selected].is_expanded;
+                            if state.groups[state.selected].is_expanded {
+                                state.groups[state.selected].selected_child = 0;
                             }
                         }
                     }
@@ -345,7 +458,9 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
                         } else {
                             state.load_sessions();
                         }
-                        list_state.select(Some(state.selected.min(state.sessions.len().saturating_sub(1))));
+                        if !state.groups.is_empty() {
+                            list_state.select(Some(state.selected.min(state.groups.len().saturating_sub(1))));
+                        }
                     }
                     _ => {}
                 }

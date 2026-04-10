@@ -724,6 +724,27 @@ static HTML: &str = r#"<!DOCTYPE html>
             flex: 1;
             margin-bottom: 0 !important;
         }
+
+        .session-item.child {
+            padding-left: 40px;
+            background: var(--surface);
+        }
+
+        .session-item.child:hover {
+            background: var(--surface-hover);
+        }
+
+        .expand-icon {
+            font-family: monospace;
+            margin-right: 8px;
+            color: var(--accent);
+        }
+
+        .session-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
     </style>
 </head>
 <body>
@@ -797,7 +818,9 @@ static HTML: &str = r#"<!DOCTYPE html>
 
     <script>
         let sessions = [];
-        let selectedSession = null;
+        let groups = [];
+        let selectedGroup = 0;
+        let selectedChild = 0;
         let filterTag = null;
         let searchTimeout = null;
 
@@ -805,6 +828,35 @@ static HTML: &str = r#"<!DOCTYPE html>
         const sessionList = document.getElementById('session-list');
         const detailPanel = document.getElementById('detail');
         const tagsList = document.getElementById('tags-list');
+
+        function formatBeijingTime(utcStr) {
+            try {
+                const dt = new Date(utcStr);
+                return dt.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(/\//g, '-');
+            } catch {
+                return utcStr;
+            }
+        }
+
+        function computeGroups(sessions) {
+            const map = {};
+            for (const s of sessions) {
+                const path = s.project_path || 'unknown';
+                if (!map[path]) {
+                    map[path] = [];
+                }
+                map[path].push(s);
+            }
+
+            return Object.entries(map).map(([path, sess]) => {
+                sess.sort((a, b) => b.created_at.localeCompare(a.created_at));
+                const dirName = path.split('/').pop() || path;
+                const claude = sess.filter(s => s.tool === 'claude').length;
+                const opencode = sess.filter(s => s.tool === 'opencode').length;
+                const latestTime = sess.length > 0 ? formatBeijingTime(sess[0].created_at) : '';
+                return { path, dirName, claude, opencode, latestTime, sessions: sess, isExpanded: false };
+            }).sort((a, b) => b.latestTime.localeCompare(a.latestTime));
+        }
 
         async function fetchSessions() {
             const params = new URLSearchParams();
@@ -818,8 +870,12 @@ static HTML: &str = r#"<!DOCTYPE html>
             ]);
 
             sessions = await sessionsRes.json();
+            groups = computeGroups(sessions);
             const stats = await statsRes.json();
             const tags = await tagsRes.json();
+
+            selectedGroup = 0;
+            selectedChild = 0;
 
             document.getElementById('stat-claude').textContent = stats.claude;
             document.getElementById('stat-opencode').textContent = stats.opencode;
@@ -827,25 +883,72 @@ static HTML: &str = r#"<!DOCTYPE html>
 
             renderSessions();
             renderTags(tags);
+            renderDetail();
+        }
+
+        function selectGroup(gi, si) {
+            const group = groups[gi];
+            if (!group) return;
+
+            if (si === 0) {
+                if (group.isExpanded) {
+                    group.isExpanded = false;
+                } else {
+                    group.isExpanded = true;
+                }
+                selectedGroup = gi;
+                selectedChild = 0;
+            } else {
+                const sessionIndex = si - 1;
+                if (sessionIndex >= 0 && sessionIndex < group.sessions.length) {
+                    selectedGroup = gi;
+                    selectedChild = si;
+                }
+            }
+
+            renderSessions();
+            renderDetail();
         }
 
         function renderSessions() {
-            if (sessions.length === 0) {
+            if (groups.length === 0) {
                 sessionList.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--text-muted);">没有找到 Session</div>';
                 return;
             }
 
-            sessionList.innerHTML = sessions.map(s => {
-                const projectName = s.project_path ? s.project_path.split('/').pop() : 'unknown';
-                const isSelected = selectedSession && selectedSession.session_id === s.session_id;
-                return `
-                    <div class="session-item ${isSelected ? 'selected' : ''}" onclick="selectSession('${s.session_id}')">
-                        <span class="session-tool ${s.tool}">${s.tool}</span>
-                        <span class="session-id">${s.session_id.substring(0, 8)}</span>
-                        <span class="session-project">${projectName}</span>
-                        ${s.title ? `<span class="session-title">${s.title}</span>` : ''}
-                    </div>
-                `;
+            sessionList.innerHTML = groups.map((g, gi) => {
+                const isGroupSelected = selectedGroup === gi && selectedChild === 0;
+                const expandIcon = g.isExpanded ? '[-]' : '[+]';
+                const counts = `Claude:${g.claude}, OpenCode:${g.opencode}`;
+
+                let html = '';
+                if (g.isExpanded) {
+                    html += `<div class="session-item ${isGroupSelected ? 'selected' : ''}" onclick="selectGroup(${gi}, 0)">
+                        <span class="expand-icon">${expandIcon}</span>
+                        <span class="session-project">${g.dirName}</span>
+                        <span style="color: var(--text-muted); font-size: 12px;">(${counts})</span>
+                        <span style="color: var(--text-muted); font-size: 11px; margin-left: auto;">latest: ${g.latestTime}</span>
+                    </div>`;
+                    g.sessions.forEach((s, si) => {
+                        const childSelected = selectedGroup === gi && selectedChild === si + 1;
+                        const title = s.title || '';
+                        html += `<div class="session-item child ${childSelected ? 'selected' : ''}" onclick="selectGroup(${gi}, ${si + 1})">
+                            <span style="width: 20px;"></span>
+                            <span class="session-tool ${s.tool}">${s.tool}</span>
+                            <span class="session-id">${s.session_id.substring(0, 8)}</span>
+                            <span class="session-project">${title}</span>
+                            <span class="session-time">${formatBeijingTime(s.created_at)}</span>
+                        </div>`;
+                    });
+                } else {
+                    html = `<div class="session-item ${isGroupSelected ? 'selected' : ''}" onclick="selectGroup(${gi}, 0)">
+                        <span class="expand-icon">${expandIcon}</span>
+                        <span class="session-project">${g.dirName}</span>
+                        <span style="color: var(--text-muted); font-size: 12px;">(${counts})</span>
+                        <span style="color: var(--text-muted); font-size: 11px; margin-left: auto;">latest: ${g.latestTime}</span>
+                    </div>`;
+                }
+                return html;
             }).join('');
         }
 
@@ -858,15 +961,27 @@ static HTML: &str = r#"<!DOCTYPE html>
             `;
         }
 
-        async function selectSession(sessionId) {
-            selectedSession = sessions.find(s => s.session_id === sessionId);
-            await renderDetail();
-        }
-
         async function renderDetail() {
-            if (!selectedSession) {
+            if (selectedGroup >= groups.length) {
                 detailPanel.innerHTML = '<div class="detail-empty">选择一个 Session 查看详情</div>';
                 return;
+            }
+
+            const group = groups[selectedGroup];
+            let session;
+            if (selectedChild === 0) {
+                if (!group.sessions.length) {
+                    detailPanel.innerHTML = '<div class="detail-empty">该目录没有 Session</div>';
+                    return;
+                }
+                session = group.sessions[0];
+            } else {
+                const idx = selectedChild - 1;
+                if (idx >= group.sessions.length) {
+                    detailPanel.innerHTML = '<div class="detail-empty">Session 未找到</div>';
+                    return;
+                }
+                session = group.sessions[idx];
             }
 
             const params = new URLSearchParams();
@@ -876,39 +991,29 @@ static HTML: &str = r#"<!DOCTYPE html>
             const res = await fetch('/api/session-detail?' + params);
             const detail = await res.json();
 
-            if (!detail) {
-                detailPanel.innerHTML = '<div class="detail-empty">Session 未找到</div>';
-                return;
-            }
-
-            const resumeCmd = detail.tool === 'claude'
-                ? `claude --resume ${detail.session_id}`
-                : `opencode -s ${detail.session_id}`;
+            const resumeCmd = session.tool === 'claude'
+                ? `claude --resume ${session.session_id}`
+                : `opencode -s ${session.session_id}`;
 
             detailPanel.innerHTML = `
                 <div class="detail-header">
-                    <div class="detail-title">${detail.title || '无标题'}</div>
-                    <span class="session-tool ${detail.tool}" style="margin-top: 8px; display: inline-block;">${detail.tool}</span>
+                    <div class="detail-title">${session.title || '无标题'}</div>
+                    <span class="session-tool ${session.tool}" style="margin-top: 8px; display: inline-block;">${session.tool}</span>
                 </div>
 
                 <div class="detail-row">
                     <div class="detail-label">Session ID</div>
-                    <div class="detail-value mono">${detail.session_id}</div>
+                    <div class="detail-value mono">${session.session_id}</div>
                 </div>
 
                 <div class="detail-row">
                     <div class="detail-label">项目路径</div>
-                    <div class="detail-value">${detail.project_path || '无'}</div>
+                    <div class="detail-value">${session.project_path || '无'}</div>
                 </div>
 
                 <div class="detail-row">
                     <div class="detail-label">创建时间</div>
-                    <div class="detail-value">${detail.created_at}</div>
-                </div>
-
-                <div class="detail-row">
-                    <div class="detail-label">标签</div>
-                    <div class="detail-value">${detail.tags.length > 0 ? detail.tags.join(', ') : '无'}</div>
+                    <div class="detail-value">${formatBeijingTime(session.created_at)}</div>
                 </div>
 
                 <div class="detail-actions">
@@ -925,15 +1030,24 @@ static HTML: &str = r#"<!DOCTYPE html>
         }
 
         async function copyResume() {
-            if (!selectedSession) return;
+            if (selectedGroup >= groups.length) return;
 
-            const res = await fetch('/api/resume?session_id=' + encodeURIComponent(selectedSession.session_id));
-            const data = await res.json();
-
-            if (data) {
-                await navigator.clipboard.writeText(data);
-                showToast('已复制: ' + data);
+            const group = groups[selectedGroup];
+            let session;
+            if (selectedChild === 0) {
+                session = group.sessions[0];
+            } else {
+                const idx = selectedChild - 1;
+                if (idx >= group.sessions.length) return;
+                session = group.sessions[idx];
             }
+
+            const cmd = session.tool === 'claude'
+                ? `claude --resume ${session.session_id}`
+                : `opencode -s ${session.session_id}`;
+
+            await navigator.clipboard.writeText(cmd);
+            showToast('已复制: ' + cmd);
         }
 
         function showToast(msg) {
@@ -954,9 +1068,20 @@ static HTML: &str = r#"<!DOCTYPE html>
             fetchSessions();
         }
 
+        function getCurrentSession() {
+            if (selectedGroup >= groups.length) return null;
+            const group = groups[selectedGroup];
+            if (selectedChild === 0) {
+                return group.sessions[0] || null;
+            }
+            const idx = selectedChild - 1;
+            return idx < group.sessions.length ? group.sessions[idx] : null;
+        }
+
         function openTitleModal() {
-            if (!selectedSession) return;
-            document.getElementById('title-input').value = selectedSession.title || '';
+            const session = getCurrentSession();
+            if (!session) return;
+            document.getElementById('title-input').value = session.title || '';
             document.getElementById('title-modal').classList.add('show');
             document.getElementById('title-input').focus();
         }
@@ -966,13 +1091,14 @@ static HTML: &str = r#"<!DOCTYPE html>
         }
 
         async function saveTitle() {
-            if (!selectedSession) return;
+            const session = getCurrentSession();
+            if (!session) return;
 
             const title = document.getElementById('title-input').value;
             const res = await fetch('/api/title', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: selectedSession.id, title })
+                body: JSON.stringify({ id: session.id, title })
             });
 
             if (await res.json()) {
@@ -984,7 +1110,8 @@ static HTML: &str = r#"<!DOCTYPE html>
         }
 
         function openTagModal() {
-            if (!selectedSession) return;
+            const session = getCurrentSession();
+            if (!session) return;
             loadCurrentTags();
             document.getElementById('tag-modal').classList.add('show');
             document.getElementById('tag-input').focus();
@@ -995,7 +1122,9 @@ static HTML: &str = r#"<!DOCTYPE html>
         }
 
         async function loadCurrentTags() {
-            const res = await fetch('/api/session-detail?' + new URLSearchParams({ query: searchInput.value }));
+            const session = getCurrentSession();
+            if (!session) return;
+            const res = await fetch('/api/session-detail?' + new URLSearchParams({ session_id: session.session_id }));
             const detail = await res.json();
 
             if (detail && detail.tags) {
@@ -1009,7 +1138,8 @@ static HTML: &str = r#"<!DOCTYPE html>
         }
 
         async function addTag() {
-            if (!selectedSession) return;
+            const session = getCurrentSession();
+            if (!session) return;
 
             const input = document.getElementById('tag-input');
             const tag = input.value.trim();
@@ -1018,7 +1148,7 @@ static HTML: &str = r#"<!DOCTYPE html>
             const res = await fetch('/api/tag', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: selectedSession.session_id, action: 'add', value: tag })
+                body: JSON.stringify({ session_id: session.session_id, action: 'add', value: tag })
             });
 
             if (await res.json()) {
@@ -1030,12 +1160,13 @@ static HTML: &str = r#"<!DOCTYPE html>
         }
 
         async function removeTag(tag) {
-            if (!selectedSession) return;
+            const session = getCurrentSession();
+            if (!session) return;
 
             const res = await fetch('/api/tag', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: selectedSession.session_id, action: 'remove', value: tag })
+                body: JSON.stringify({ session_id: session.session_id, action: 'remove', value: tag })
             });
 
             if (await res.json()) {
@@ -1053,10 +1184,9 @@ static HTML: &str = r#"<!DOCTYPE html>
 
         // Enter to copy resume
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && document.activeElement === searchInput) {
-                if (sessions.length > 0) {
-                    selectSession(sessions[0].session_id);
-                }
+            if (e.key === 'Enter' && document.activeElement === document.body) {
+                e.preventDefault();
+                copyResume();
             }
         });
 
